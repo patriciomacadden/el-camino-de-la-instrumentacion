@@ -3,6 +3,7 @@ GEM
   specs:
     ast (2.4.3)
     ffi (1.17.2)
+    ffi (1.17.2-aarch64-linux-gnu)
     ffi (1.17.2-arm64-darwin)
     json (2.16.0)
     kramdown (2.5.1)
@@ -69,6 +70,7 @@ GEM
     standardrb (1.0.1)
       standard
     tailwindcss-ruby (4.1.16)
+    tailwindcss-ruby (4.1.16-aarch64-linux-gnu)
     tailwindcss-ruby (4.1.16-arm64-darwin)
     unicode-display_width (3.2.0)
       unicode-emoji (~> 4.1)
@@ -76,6 +78,7 @@ GEM
     webrick (1.9.1)
 
 PLATFORMS
+  aarch64-linux
   arm64-darwin-24
   ruby
 

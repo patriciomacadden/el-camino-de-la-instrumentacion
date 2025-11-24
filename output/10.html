@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8">
     <link rel="stylesheet" href="application.css">
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-        const slides = ["index.html","02.html","03.html","04.html","05.html","06.html","07.html","08.html","09.html","1.html","10.html","11.html","12.html","13.html","14.html","15.html","16.html","17.html","18.html","2.html","3.html","4.html","5.html","6.html","7.html","8.html","9.html"];
+        const slides = ["index.html","02.html","03.html","04.html","05.html","06.html","07.html","08.html","09.html","10.html","11.html","12.html","13.html","14.html","15.html","16.html","17.html","18.html","19.html","20.html","21.html","22.html","23.html"];
         let filename = window.location.pathname.split('/').pop();
         if (filename === '') filename = 'index.html';
 
@@ -28,29 +29,32 @@
       });
     </script>
   </head>
-  <body data-mode="light" data-variant="top">
+  <body data-mode="light" data-variant="center">
     <div class="blur-accent blur-accent-blue-1"></div>
     <div class="blur-accent blur-accent-green-1"></div>
 
-    <h1 id="build-commands">Build Commands</h1>
+    <div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Pasar de esto:</span>
+<span class="k">begin</span>
+  <span class="n">do_something</span>
+<span class="k">rescue</span> <span class="no">SomethingIsBroken</span> <span class="o">=&gt;</span> <span class="n">error</span>
+  <span class="no">MyErrorReportingService</span><span class="p">.</span><span class="nf">notify</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+<span class="k">end</span>
 
-<h2 id="development">Development</h2>
+<span class="c1"># a esto:</span>
+<span class="no">Rails</span><span class="p">.</span><span class="nf">error</span><span class="p">.</span><span class="nf">handle</span><span class="p">(</span><span class="no">SomethingIsBroken</span><span class="p">)</span> <span class="k">do</span>
+  <span class="n">do_something</span>
+<span class="k">end</span>
 
-<p>Run the dev server with live reloading:</p>
+<span class="c1"># Entonces podemos crear un subscriber</span>
+<span class="k">class</span> <span class="nc">ErrorSubscriber</span>
+  <span class="k">def</span> <span class="nf">report</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">handled</span><span class="p">:,</span> <span class="n">severity</span><span class="p">:,</span> <span class="n">context</span><span class="p">:,</span> <span class="ss">source: </span><span class="kp">nil</span><span class="p">)</span>
+    <span class="no">MyErrorReportingService</span><span class="p">.</span><span class="nf">report_error</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="ss">context: </span><span class="n">context</span><span class="p">,</span> <span class="ss">handled: </span><span class="n">handled</span><span class="p">,</span> <span class="ss">level: </span><span class="n">severity</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rake server
+<span class="c1"># y suscribirlo</span>
+<span class="no">Rails</span><span class="p">.</span><span class="nf">error</span><span class="p">.</span><span class="nf">subscribe</span><span class="p">(</span><span class="no">ErrorSubscriber</span><span class="p">.</span><span class="nf">new</span><span class="p">)</span>
 </code></pre></div></div>
-
-<p>Visit http://localhost:8000 to see your slides. Changes to markdown, templates, or assets auto-reload.</p>
-
-<h2 id="production">Production</h2>
-
-<p>Build static HTML files:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rake build
-</code></pre></div></div>
-
-<p>Output files are generated in the <code>output/</code> directory.</p>
 
 
     

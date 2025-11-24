@@ -113,12 +113,12 @@ p {
 
 /* Links */
 a {
-  @apply text-sinaptia-green-light underline;
+  @apply text-sinaptia-blue underline;
   @apply transition-all duration-300;
 }
 
 a:hover {
-  @apply text-sinaptia-blue no-underline;
+  @apply text-sinaptia-blue-active no-underline;
 }
 
 /* Lists */
@@ -197,7 +197,7 @@ body[data-mode="light"] h4 {
 }
 
 body[data-mode="light"] a {
-  @apply text-sinaptia-green-light;
+  @apply text-sinaptia-blue;
 }
 
 body[data-mode="light"] pre {

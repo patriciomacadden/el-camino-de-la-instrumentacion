@@ -8,7 +8,8 @@
       "WebFetch(domain:sinaptia.dev)",
       "Bash(git mv:*)",
       "Bash(git checkout:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(rake build:*)"
     ],
     "deny": [],
     "ask": []
