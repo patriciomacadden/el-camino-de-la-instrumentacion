@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ruby test:*)",
+      "Bash(ruby:*)",
+      "Bash(sed:*)",
+      "Bash(./build)",
+      "WebFetch(domain:sinaptia.dev)",
+      "Bash(git mv:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

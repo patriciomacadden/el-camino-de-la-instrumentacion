@@ -1,0 +1,405 @@
+#!/usr/bin/env ruby
+require 'bundler/setup'
+require 'listen'
+require 'kramdown'
+require 'yaml'
+require 'fileutils'
+require 'erb'
+require 'json'
+require 'webrick'
+
+class SinaptiaRenderer < Kramdown::Converter::Html
+  def convert_header(el, indent)
+    level = el.options[:level]
+    content = inner(el, indent)
+
+    case level
+    when 1
+      %(<h1 class="text-lg xl:text-[24px] font-bold uppercase leading-tight font-lead text-sinaptia-accent-blue">#{content}</h1>)
+    when 2
+      %(<h3 class="text-xl xl:text-[24px] font-bold uppercase leading-tight font-lead text-sinaptia-accent-blue">#{content}</h3>)
+    when 3
+      %(<h3 class="text-xl xl:text-[24px] font-bold uppercase leading-tight font-lead text-sinaptia-accent-blue">#{content}</h3>)
+    else
+      %(<h#{level} class="text-xl font-bold text-sinaptia-accent-blue">#{content}</h#{level}>)
+    end
+  end
+
+  def convert_ul(el, indent)
+    content = inner(el, indent)
+    %(<ul class="custom-bullets text-lg xl:text-[20px] font-light leading-relaxed">#{content}</ul>)
+  end
+
+  def convert_li(el, indent)
+    content = inner(el, indent)
+    content = content.gsub(/<\/?p[^>]*>/, '') if content.include?('<p')
+    %(<li>#{content}</li>)
+  end
+
+  def convert_p(el, indent)
+    content = inner(el, indent)
+    %(<p class="text-lg xl:text-[20px] font-light leading-relaxed">#{content}</p>)
+  end
+
+  def convert_codeblock(el, indent)
+    lang = el.attr['class']&.split('-')&.last || 'text'
+    content = el.value
+
+    %(<div class="bg-gray-100 p-4 rounded-lg font-mono text-base border border-gray-200">
+        <pre><code class="language-#{lang}">#{content}</code></pre>
+      </div>)
+  end
+
+  def convert_img(el, indent)
+    src = el.attr['src']
+    alt = el.attr['alt'] || ''
+
+    # Only accept /media/ global paths
+    unless src.start_with?('/media/')
+      puts "❌ ERROR: Image path '#{src}' MUST start with /media/ - no other patterns are supported"
+      puts "   Please change to: /media/#{File.basename(src)}"
+    end
+
+    # Convert /media/ to relative media/ for GitHub Pages compatibility
+    relative_src = src.sub(/^\/media\//, 'media/')
+
+    %(<div class="text-center my-8">
+        <img src="#{relative_src}" alt="#{alt}" class="max-w-full h-auto mx-auto rounded-lg shadow-lg">
+      </div>)
+  end
+
+  def convert_p(el, indent)
+    if el.children.length == 1 && el.children.first.type == :img
+      return convert_img(el.children.first, indent)
+    end
+
+    content = inner(el, indent)
+    content = content.gsub(/<p[^>]*>(<div class="text-center[^>]*>.*?<\/div>)<\/p>/m, '\1')
+    %(<p class="text-lg xl:text-[20px] font-light leading-relaxed">#{content}</p>)
+  end
+end
+
+class SinaptiaSlideBuilder
+  def initialize(base_dir = '.')
+    @base_dir = base_dir
+    @slides_dir = File.join(@base_dir, 'slides')
+    @templates_dir = File.join(@base_dir, 'templates')
+    @output_dir = './output'
+
+    FileUtils.mkdir_p(@output_dir)
+  end
+
+  def parse_slide_file(slide_file)
+    content = File.read(slide_file)
+    parts = content.split('---', 3)
+    if parts.length >= 3
+      frontmatter = YAML.load(parts[1]) rescue {}
+      body = parts[2].strip
+    else
+      frontmatter = {}
+      body = content.strip
+    end
+
+    [frontmatter, body]
+  end
+
+  def render_markdown_content(markdown_body)
+    doc = Kramdown::Document.new(markdown_body, input: 'GFM')
+    SinaptiaRenderer.convert(doc.root).first
+  end
+
+  def load_template(template_type)
+    template_file = File.join(@templates_dir, "#{template_type}.erb")
+
+    unless File.exist?(template_file)
+      raise "Template not found: #{template_file}"
+    end
+
+    File.read(template_file)
+  end
+
+  def render_erb_template(template_content, context)
+    erb = ERB.new(template_content)
+    erb.result_with_hash(context)
+  end
+
+  def render_with_layout(template_content, context, template_type, slide_list = [])
+    layout_path = File.join(@templates_dir, '_layout.erb')
+
+    if File.exist?(layout_path)
+      layout_content = File.read(layout_path)
+
+      context[:content] = render_erb_template(template_content, context)
+      context[:logo_size] = get_logo_size(template_type)
+      context[:slide_list] = slide_list
+
+      render_erb_template(layout_content, context)
+    else
+      render_erb_template(template_content, context)
+    end
+  end
+
+  def get_logo_size(template_type)
+    case template_type
+    when 'frontpage'
+      '220'
+    when 'content'
+      '160'
+    else
+      '160'
+    end
+  end
+
+  def extract_title_from_html(html)
+    if html.match(/<h1[^>]*>(.*?)<\/h1>/m)
+      $1.strip.gsub(/<[^>]*>/, '')
+    end
+  end
+
+  def extract_subtitle_from_html(html)
+    if html.match(/<h3[^>]*>(.*?)<\/h3>/m)
+      $1.strip.gsub(/<[^>]*>/, '')
+    end
+  end
+
+  def extract_all_h3_from_html(html)
+    html.scan(/<h3[^>]*>(.*?)<\/h3>/m).map { |match| match[0].strip.gsub(/<[^>]*>/, '') }
+  end
+
+  def prepare_template_data(frontmatter, rendered_content, template_type)
+    data = {}
+    data[:render_footer] = frontmatter['render_footer'].to_s != "false"
+    data[:page_title] = frontmatter['page_title'] || extract_title_from_html(rendered_content)
+    data[:title] = frontmatter['title'] || extract_title_from_html(rendered_content)
+
+    content_without_title = rendered_content.sub(/<h1[^>]*>.*?<\/h1>/m, '').strip
+    data[:content] = content_without_title
+
+    case template_type
+    when 'frontpage'
+      h3_elements = extract_all_h3_from_html(rendered_content)
+      data[:subtitle] = frontmatter['subtitle'] || h3_elements[0]
+      data[:description] = frontmatter['description'] || h3_elements[1]
+
+      # For frontpage, only remove the first two h3 elements that are used for subtitle/description
+      content_without_headers = content_without_title
+      if h3_elements.length >= 2 && !frontmatter['subtitle'] && !frontmatter['description']
+        # Remove first two h3 elements only
+        h3_matches = content_without_headers.scan(/<h3[^>]*>.*?<\/h3>/m)
+        if h3_matches.length >= 2
+          content_without_headers = content_without_headers.sub(/<h3[^>]*>.*?<\/h3>/m, '').sub(/<h3[^>]*>.*?<\/h3>/m, '').strip
+        end
+      elsif h3_elements.length >= 1 && !frontmatter['subtitle'] && frontmatter['description']
+        # Remove first h3 element only
+        content_without_headers = content_without_headers.sub(/<h3[^>]*>.*?<\/h3>/m, '').strip
+      elsif h3_elements.length >= 1 && frontmatter['subtitle'] && !frontmatter['description']
+        # Remove first h3 element only (for description)
+        content_without_headers = content_without_headers.sub(/<h3[^>]*>.*?<\/h3>/m, '').strip
+      end
+      data[:content] = content_without_headers
+
+      data[:presenter_label] = frontmatter['presenter_label']
+      data[:presenter] = frontmatter['presenter']
+      data[:date] = frontmatter['date']
+    when 'section-title'
+      data[:chapter] = frontmatter['chapter'] || 'Section Chapter'
+      data[:description] = frontmatter['description']
+    when 'content'
+    end
+
+    data
+  end
+
+  def build_slide(slide_file, slide_list = [])
+    filename = File.basename(slide_file, '.md')
+
+    frontmatter, body = parse_slide_file(slide_file)
+    template_type = frontmatter['template'] || 'content'
+
+    rendered_content = render_markdown_content(body)
+    template_content = load_template(template_type)
+    template_data = prepare_template_data(frontmatter, rendered_content, template_type)
+    final_html = render_with_layout(template_content, template_data, template_type, slide_list)
+
+    output_file = File.join(@output_dir, "#{filename}.html")
+    File.write(output_file, final_html)
+
+    output_file
+  end
+
+  def build_all_slides
+    slide_files = Dir.glob(File.join(@slides_dir, '*.md')).sort
+
+    if slide_files.empty?
+      puts "❌ No slide files found in #{@slides_dir}"
+      return
+    end
+
+    # Generate dynamic slide list for navigation
+    slide_list = slide_files.map { |f| File.basename(f, '.md') + '.html' }
+
+    built_files = []
+    errors = []
+
+    slide_files.each do |slide_file|
+      begin
+        output_file = build_slide(slide_file, slide_list)
+        built_files << output_file
+      rescue => e
+        filename = File.basename(slide_file, '.md')
+        errors << "#{filename}: #{e.message}"
+      end
+    end
+
+    copy_media
+
+    # Only show errors if any occurred
+    if errors.any?
+      puts "❌ Build errors:"
+      errors.each { |error| puts "   - #{error}" }
+      puts
+    end
+
+    puts "✅ Built #{built_files.length}/#{slide_files.length} slides"
+
+    built_files
+  end
+
+  def copy_media
+    media_source = File.join(@slides_dir, 'media')
+    media_dest = File.join(@output_dir, 'media')
+    FileUtils.mkdir_p(media_dest)
+
+    return unless Dir.exist?(media_source)
+
+    media_extensions = %w[.png .jpg .jpeg .gif .svg .webp .mp3 .wav .ogg .m4a .aac]
+    copied_files = []
+
+    Dir.glob(File.join(media_source, '*')).each do |file|
+      if File.file?(file) && media_extensions.include?(File.extname(file).downcase)
+        dest_file = File.join(media_dest, File.basename(file))
+        FileUtils.cp(file, dest_file)
+        copied_files << File.basename(file)
+      end
+    end
+
+    # Only show media copy info if files were actually copied
+    if copied_files.any?
+      puts "📁 Copied #{copied_files.length} media files"
+    end
+  end
+end
+
+def start_server(port)
+  doc_root = File.expand_path('./output', __dir__)
+
+  unless Dir.exist?(doc_root)
+    puts "Error: output directory not found. Building first..."
+    builder = SinaptiaSlideBuilder.new
+    builder.build_all_slides
+  end
+
+  puts "Starting server on http://localhost:#{port}"
+  puts "Serving files from: #{doc_root}"
+
+  server = WEBrick::HTTPServer.new(
+    Port: port,
+    DocumentRoot: doc_root,
+    AccessLog: [],
+    Logger: WEBrick::Log.new('/dev/null')
+  )
+
+  server
+end
+
+def watch_and_serve(port = 8000)
+  puts "🎨 SINAPTIA SLIDE BUILDER - WATCH & SERVE MODE"
+  puts "=" * 50
+  puts
+
+  # Initial build
+  builder = SinaptiaSlideBuilder.new
+  builder.build_all_slides
+
+  # Create server instance
+  server = start_server(port)
+  listener = nil
+
+  # Setup cleanup at exit
+  at_exit do
+    puts "\nShutting down server and file watcher..."
+    server.shutdown if server
+    listener.stop if listener
+  end
+
+  # Start server in separate thread
+  server_thread = Thread.new do
+    server.start
+  rescue => e
+    puts "Server error: #{e.message}"
+  end
+
+  # Start file watcher in separate thread
+  watcher_thread = Thread.new do
+    puts "Starting file watcher for markdown files in slides/ directory..."
+
+    listener = Listen.to('.') do |modified, added, removed|
+      markdown_files = (modified + added + removed).select { |f| f.end_with?('.md') || f.end_with?('.erb') }
+
+      if markdown_files.any?
+        puts "\nChanges detected in:"
+        markdown_files.each { |file| puts "  - #{file}" }
+
+        puts "Rebuilding slides..."
+        builder = SinaptiaSlideBuilder.new
+        builder.build_all_slides
+        puts "🔄 Server still running at http://localhost:#{port}"
+        puts "Press Enter to trigger manual build, Ctrl+C to stop"
+      end
+    end
+
+    listener.start
+    sleep
+  rescue => e
+    puts "Watcher error: #{e.message}"
+  end
+
+  puts "Press Enter to trigger manual build, Ctrl+C to stop"
+
+  # Main thread waits for user input - let default signal handling work
+  begin
+    while true
+      input = STDIN.gets
+      if input.nil? # Ctrl+D
+        puts "\nExiting..."
+        break
+      elsif input.strip.empty? # Enter pressed
+        puts "Manual build triggered..."
+        builder = SinaptiaSlideBuilder.new
+        builder.build_all_slides
+        puts "🔄 Server still running at http://localhost:#{port}"
+        puts "Press Enter to trigger manual build, Ctrl+C to stop"
+      end
+    end
+  rescue Interrupt # Ctrl+C
+    puts "\nReceived interrupt signal..."
+  end
+end
+
+
+port = 8000
+build_only = ARGV.include?('--only') || ARGV.include?('-b')
+
+# Extract port if provided
+port_arg = ARGV.find { |arg| arg.match?(/^\d+$/) }
+port = port_arg.to_i if port_arg
+
+if build_only
+  builder = SinaptiaSlideBuilder.new
+  builder.build_all_slides
+else
+  # Default: watch and serve
+  watch_and_serve(port)
+end
+
+# Remove the infinite loop since watch_and_serve now handles its own lifecycle

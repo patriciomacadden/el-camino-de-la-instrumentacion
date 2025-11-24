@@ -1,0 +1,46 @@
+<style>
+  .sinaptia-gradient-bg {
+    background: radial-gradient(circle, #ffffff 20%, #000000 80%);
+    background-size: 1000% 1000%;
+    animation: gradient 60s ease-in-out infinite;
+  }
+
+  .bg-linear-to-r {
+    background-image: linear-gradient(to right, var(--tw-gradient-stops));
+  }
+
+  .animate-gradient {
+    background-size: 400% 400%;
+    animation: gradient 15s ease-in-out infinite;
+  }
+
+  @keyframes gradient {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .from-sinaptia-accent-blue {
+    --tw-gradient-from: #3B82F6;
+  }
+
+  .via-sinaptia-white {
+    --tw-gradient-to: rgb(255 255 255 / 0);
+    --tw-gradient-stops: var(--tw-gradient-from), #FFFFFF, var(--tw-gradient-to);
+  }
+
+  .to-sinaptia-accent-green-over-black {
+    --tw-gradient-to: #10B981;
+  }
+</style>
+
+<div class="sinaptia-gradient-bg min-h-screen flex items-center justify-center overflow-hidden relative -z-20">
+  <div class="flex items-center justify-center w-full h-screen">
+    <span class="text-[16vw] text-center leading-none font-title font-bold bg-linear-to-r from-sinaptia-accent-blue via-sinaptia-white to-sinaptia-accent-green-over-black text-transparent bg-clip-text bg-[size:400%] animate-gradient">
+      SINAPTIA
+    </span>
+  </div>
+</div>

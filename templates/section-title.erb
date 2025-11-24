@@ -1,0 +1,27 @@
+<div class="flex-1 px-4 pt-6 space-y-14 pb-14 xl:pb-36 md:px-16 xl:pt-12 xl:px-[148px] 2xl:px-64 xl:space-y-20 flex flex-col justify-center">
+    <div class="space-y-12">
+        <% if chapter %>
+        <p class="text-lg xl:text-[24px] font-bold uppercase leading-tight font-lead text-sinaptia-accent-blue">
+            <%= chapter %>
+        </p>
+        <% end %>
+        
+        <% if title %>
+        <h1 class="w-full relative uppercase font-title text-[40px] md:text-[56px] xl:text-[88px] leading-none">
+            <%= title %>
+        </h1>
+        <% end %>
+        
+        <% if description %>
+        <p class="text-xl xl:text-[28px] font-light leading-tight xl:leading-relaxed xl:w-3/4 2xl:w-4/5">
+            <%= description %>
+        </p>
+        <% end %>
+    </div>
+    
+    <% if content && !content.empty? %>
+    <div class="mt-8">
+        <%= content %>
+    </div>
+    <% end %>
+</div>

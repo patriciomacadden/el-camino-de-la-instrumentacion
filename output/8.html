@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'sinaptia-accent-blue': '#55adff',
+                        'sinaptia-accent-blue-active': '#448acc',
+                        'sinaptia-accent-green-over-black': '#7fe2c5',
+                        'sinaptia-accent-green-over-white': '#55ffcc',
+                        'sinaptia-gray-light': '#d6dad9',
+                        'sinaptia-gray-mid': '#b2b6b5',
+                        'sinaptia-gray-dark': '#999e9d',
+                        'sinaptia-white': '#fbfbfb'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif'],
+                        'lead': ['Inconsolata'],
+                        'title': ['PP Monument Extended', 'Arial Black', 'Helvetica Neue', 'Arial', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <title>Code Examples</title>
+
+    <style>
+        @font-face {
+            font-family: "PP Monument Extended";
+            src: url('https://sinaptia.dev/assets/fonts/PPMonumentExtended-Regular.otf');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        .page {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .custom-bullets li {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .custom-bullets li::before {
+            content: "•";
+            color: #55adff;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.5rem;
+            line-height: 1.2;
+        }
+
+        @keyframes float-1 {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            23% { transform: translate(35px, -28px) rotate(1.2deg) scale(1.3); }
+            47% { transform: translate(-18px, 22px) rotate(-0.8deg) scale(0.7); }
+            71% { transform: translate(42px, 15px) rotate(0.6deg) scale(1.1); }
+            89% { transform: translate(-25px, -35px) rotate(-1.1deg) scale(0.78); }
+            100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+        }
+
+        @keyframes float-2 {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            19% { transform: translate(-61px, 48px) rotate(-1.9deg) scale(0.6); }
+            38% { transform: translate(28px, -25px) rotate(3.3deg) scale(1.3); }
+            59% { transform: translate(-15px, 38px) rotate(1.3deg) scale(0.9); }
+            76% { transform: translate(45px, -32px) rotate(-2.4deg) scale(1.1); }
+            91% { transform: translate(-22px, -8px) rotate(3.4deg) scale(1.6); }
+            100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+        }
+
+        @keyframes float-3 {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            17% { transform: translate(-24px, -18px) rotate(0.8deg) scale(1.2); }
+            34% { transform: translate(32px, 12px) rotate(-1.5deg) scale(0.6); }
+            52% { transform: translate(-8px, 28px) rotate(2.1deg) scale(1.3); }
+            68% { transform: translate(28px, -16px) rotate(-0.9deg) scale(0.9); }
+            85% { transform: translate(-18px, 22px) rotate(1.6deg) scale(1.2); }
+            100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+        }
+
+        @keyframes float-4 {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            21% { transform: translate(-38px, 29px) rotate(1.8deg) scale(0.7); }
+            39% { transform: translate(42px, -22px) rotate(-2.2deg) scale(1.6); }
+            58% { transform: translate(-16px, -41px) rotate(2.7deg) scale(0.9); }
+            76% { transform: translate(35px, 18px) rotate(-1.3deg) scale(1.3); }
+            92% { transform: translate(-28px, 33px) rotate(1.9deg) scale(0.8); }
+            100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+        }
+
+        .blob-1 {
+            animation: float-1 14s ease-in-out infinite;
+        }
+
+        .blob-2 {
+            animation: float-2 15s ease-in-out infinite;
+        }
+
+        .blob-3 {
+            animation: float-3 11s ease-in-out infinite;
+        }
+
+        .blob-4 {
+            animation: float-4 17s ease-in-out infinite;
+        }
+    </style>
+</head>
+
+<body class="font-sans bg-gray-50 text-black">
+    <div class="page relative overflow-hidden">
+        <div class="blob-1 absolute -z-10 -top-[5%] -right-20 w-64 h-64      bg-sinaptia-accent-blue rounded-full blur-[144px]"></div>
+        <div class="blob-2 absolute -z-10 top-[20%] right-[48px] w-40 h-40   bg-sinaptia-accent-green-over-white rounded-full blur-[112px]"></div>
+        <div class="blob-3 absolute -z-10 bottom-[25%] -left-[28px] w-64 h-64 bg-sinaptia-accent-green-over-white rounded-full blur-[101px]"></div>
+        <div class="blob-4 absolute -z-10 bottom-[5%] -left-[10px] w-52 h-52   bg-sinaptia-accent-blue rounded-full blur-[135px]"></div>
+
+        <div class="flex-1 px-4 pt-6 space-y-12 pb-14 md:px-16 xl:pt-12 xl:px-[148px] 2xl:px-64 xl:space-y-16">
+    
+    <div class="space-y-8">
+        <h1 class="text-lg xl:text-[24px] font-bold uppercase leading-tight font-lead text-sinaptia-accent-blue">
+            Code Examples
+        </h1>
+    </div>
+    
+
+    <div class="space-y-12">
+        <h3 class="text-xl xl:text-[24px] font-bold uppercase leading-tight font-lead text-sinaptia-accent-blue">Syntax Highlighting</h3><p class="text-lg xl:text-[20px] font-light leading-relaxed">Supports many languages:</p>
+<div class="bg-gray-100 p-4 rounded-lg font-mono text-base border border-gray-200">
+        <pre><code class="language-javascript">function createPresentation(title) {
+  return {
+    title: title,
+    slides: [],
+    
+    addSlide(content) {
+      this.slides.push(content);
+      return this;
+    }
+  };
+}
+</code></pre>
+      </div>
+<div class="bg-gray-100 p-4 rounded-lg font-mono text-base border border-gray-200">
+        <pre><code class="language-python">def process_markdown(content):
+    """Convert markdown to HTML"""
+    lines = content.split('\n')
+    processed = []
+    
+    for line in lines:
+        if line.startswith('#'):
+            processed.append(f"<h1>{line[1:].strip()}</h1>")
+        else:
+            processed.append(f"<p>{line}</p>")
+    
+    return '\n'.join(processed)
+</code></pre>
+      </div>
+    </div>
+</div>
+
+        
+            <!-- Footer with Sinaptia logo and navigation -->
+            <div class="px-4 py-12 pb-24 md:px-16 xl:px-[148px] 2xl:px-64 relative">
+                <!-- Absolutely centered logo -->
+                <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <svg width="160" height="24" viewBox="0 0 549 82" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-sinaptia-accent-blue">
+                        <path d="M122.36 73.3781C117.97 72.0381 114.49 70.2681 111.93 68.0581L115.86 59.2481C118.36 61.2281 121.43 62.8381 125.07 64.0881C128.7 65.3381 132.36 65.9681 136.02 65.9681C140.56 65.9681 143.94 65.2381 146.18 63.7881C148.42 62.3381 149.54 60.4181 149.54 58.0281C149.54 56.2781 148.91 54.8481 147.66 53.7081C146.41 52.5781 144.82 51.6881 142.9 51.0481C140.98 50.4081 138.36 49.6781 135.05 48.8681C130.4 47.7681 126.63 46.6581 123.75 45.5481C120.87 44.4481 118.4 42.7081 116.33 40.3581C114.26 37.9981 113.23 34.8181 113.23 30.8081C113.23 27.4381 114.15 24.3681 115.98 21.6081C117.81 18.8481 120.57 16.6481 124.27 15.0181C127.96 13.3881 132.49 12.5781 137.84 12.5781C141.56 12.5781 145.23 13.0481 148.83 13.9781C152.44 14.9081 155.55 16.2481 158.17 17.9881L154.59 26.7981C151.91 25.2281 149.12 24.0381 146.21 23.2181C143.3 22.4081 140.48 21.9981 137.75 21.9981C133.27 21.9981 129.94 22.7581 127.76 24.2681C125.58 25.7781 124.49 27.7881 124.49 30.2881C124.49 32.0381 125.11 33.4581 126.37 34.5681C127.62 35.6781 129.21 36.5481 131.12 37.1881C133.04 37.8281 135.66 38.5581 138.97 39.3681C143.51 40.4181 147.23 41.5081 150.14 42.6381C153.05 43.7681 155.53 45.5081 157.6 47.8281C159.66 50.1581 160.7 53.2981 160.7 57.2481C160.7 60.6181 159.78 63.6781 157.95 66.4081C156.12 69.1381 153.34 71.3281 149.62 72.9481C145.9 74.5781 141.36 75.3881 136.01 75.3881C131.3 75.3781 126.75 74.7081 122.36 73.3781Z" fill="currentColor" />
+                        <path d="M173.619 13.4375H184.959V74.5175H173.619V13.4375Z" fill="currentColor" />
+                        <path d="M257.379 13.4375V74.5175H248.039L214.359 33.1575V74.5175H203.109V13.4375H212.449L246.129 54.7975V13.4375H257.379Z" fill="currentColor" />
+                        <path d="M315.049 60.3797H284.509L278.489 74.5097H266.799L294.279 13.4297H305.449L333.019 74.5097H321.149L315.049 60.3797ZM311.299 51.4797L299.779 24.7797L288.349 51.4797H311.299Z" fill="currentColor" />
+                        <path d="M381.399 16.0475C385.329 17.7975 388.339 20.2975 390.429 23.5475C392.519 26.8075 393.569 30.6775 393.569 35.1475C393.569 39.5675 392.519 43.4175 390.429 46.7075C388.339 49.9975 385.329 52.5075 381.399 54.2575C377.469 56.0075 372.859 56.8775 367.569 56.8775H353.779V74.4975H342.439V13.4375H367.569C372.859 13.4375 377.469 14.3075 381.399 16.0475ZM378.299 44.1475C380.859 42.0575 382.139 39.0575 382.139 35.1575C382.139 31.2575 380.859 28.2675 378.299 26.1675C375.739 24.0775 371.989 23.0275 367.049 23.0275H353.789V47.2875H367.049C371.989 47.2875 375.739 46.2375 378.299 44.1475Z" fill="currentColor" />
+                        <path d="M419.83 23.0297H399.59V13.4297H451.42V23.0297H431.18V74.5097H419.84V23.0297H419.83Z" fill="currentColor" />
+                        <path d="M461.629 13.4375H472.969V74.5175H461.629V13.4375Z" fill="currentColor" />
+                        <path d="M530.73 60.3797H500.19L494.17 74.5097H482.48L509.961 13.4297H521.13L548.701 74.5097H536.831L530.73 60.3797ZM526.97 51.4797L515.451 24.7797L504.021 51.4797H526.97Z" fill="currentColor" />
+                        <path d="M49.7295 81.2473V63.5373C65.7595 61.9173 80.1995 52.5773 88.1895 38.3473C89.5395 35.9473 88.6794 32.9173 86.2894 31.5673C83.8894 30.2173 80.8594 31.0773 79.5094 33.4673C72.4594 46.0273 59.1495 53.8273 44.7595 53.8273C30.3695 53.8273 17.0595 46.0273 10.0095 33.4673C8.65946 31.0673 5.62945 30.2173 3.22945 31.5673C1.59945 32.4773 0.689453 34.1673 0.689453 35.9173C0.689453 36.7373 0.899456 37.5773 1.32946 38.3473C9.31946 52.5773 23.7495 61.9273 39.7895 63.5373V81.2473H49.7295Z" fill="currentColor" />
+                        <path d="M44.7589 41.3381C56.1525 41.3381 65.3889 32.1018 65.3889 20.7081C65.3889 9.31449 56.1525 0.078125 44.7589 0.078125C33.3653 0.078125 24.1289 9.31449 24.1289 20.7081C24.1289 32.1018 33.3653 41.3381 44.7589 41.3381Z" fill="currentColor" />
+                    </svg>
+                </div>
+
+                <!-- Navigation buttons (right side) -->
+                <div class="flex justify-end items-center space-x-4">
+                    <button id="prevBtn" class="flex items-center justify-center w-10 h-10 rounded-full bg-sinaptia-accent-blue hover:bg-sinaptia-accent-blue-active transition-colors duration-200 text-white disabled:opacity-50 disabled:cursor-not-allowed" onclick="navigateSlides('prev')" title="Previous slide">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15,18 9,12 15,6"></polyline>
+                        </svg>
+                    </button>
+                    <button id="nextBtn" class="flex items-center justify-center w-10 h-10 rounded-full bg-sinaptia-accent-blue hover:bg-sinaptia-accent-blue-active transition-colors duration-200 text-white disabled:opacity-50 disabled:cursor-not-allowed" onclick="navigateSlides('next')" title="Next slide">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9,18 15,12 9,6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        
+        <!-- Navigation script -->
+        <script>
+            const slideNumbers = ["1.html","10.html","2.html","3.html","4.html","5.html","6.html","7.html","8.html","9.html"];
+
+            function navigateSlides(direction) {
+                const currentFile = window.location.pathname.split('/').pop();
+                const currentIndex = slideNumbers.indexOf(currentFile);
+
+                let targetIndex;
+                if (direction === 'next') {
+                    targetIndex = currentIndex + 1;
+                } else {
+                    targetIndex = currentIndex - 1;
+                }
+
+                if (targetIndex >= 0 && targetIndex < slideNumbers.length) {
+                    window.location.href = slideNumbers[targetIndex];
+                }
+
+                updateButtonStates();
+            }
+
+            function updateButtonStates() {
+                const currentFile = window.location.pathname.split('/').pop();
+                const currentIndex = slideNumbers.indexOf(currentFile);
+
+                const prevBtn = document.getElementById('prevBtn');
+                const nextBtn = document.getElementById('nextBtn');
+
+                if (prevBtn) {
+                    prevBtn.disabled = currentIndex <= 0;
+                }
+                if (nextBtn) {
+                    nextBtn.disabled = currentIndex >= slideNumbers.length - 1;
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', updateButtonStates);
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') {
+                    navigateSlides('prev');
+                } else if (e.key === 'ArrowRight') {
+                    navigateSlides('next');
+                }
+            });
+
+        </script>
+    </div>
+</body>
+</html>
