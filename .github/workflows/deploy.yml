@@ -20,7 +20,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+
+      - name: Build slides
+        run: rake build
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
