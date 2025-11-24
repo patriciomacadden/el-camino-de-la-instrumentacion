@@ -10,7 +10,9 @@
       "Bash(git checkout:*)",
       "Bash(git merge:*)",
       "Bash(rake build:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(bundle lock:*)",
+      "Bash(bundle config:*)"
     ],
     "deny": [],
     "ask": []

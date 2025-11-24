@@ -74,6 +74,11 @@ body[data-variant="center"] {
   @apply justify-center items-center;
 }
 
+body[data-variant="center"] h1,
+body[data-variant="center"] h2 {
+  @apply text-center;
+}
+
 /* Typography - Headers */
 h1 {
   @apply text-4xl md:text-[56px] leading-none;
