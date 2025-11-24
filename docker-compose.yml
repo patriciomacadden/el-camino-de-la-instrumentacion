@@ -1,0 +1,16 @@
+name: "presentations"
+
+services:
+  web:
+    build: .
+    command: [ "rake", "server" ]
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/app
+      - bundle-data:/usr/local/bundle
+    stdin_open: true
+    tty: true
+
+volumes:
+  bundle-data:

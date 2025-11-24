@@ -1,8 +1,11 @@
-# frozen_string_literal: true
+source "https://rubygems.org"
 
-source 'https://rubygems.org'
-
-gem 'kramdown', '~> 2.4'
-gem 'kramdown-parser-gfm', '~> 1.1'
-gem 'ferrum', '~> 0.15'
+gem "kramdown"
+gem "kramdown-parser-gfm"
 gem "listen"
+gem "rake"
+gem "rouge"
+gem "ruby-lsp"
+gem "standardrb"
+gem "tailwindcss-ruby"
+gem "webrick"

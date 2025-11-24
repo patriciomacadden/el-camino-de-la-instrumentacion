@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="application.css">
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-        const slides = ["index.html","02.html","03.html","04.html","05.html","06.html","07.html","08.html","09.html","1.html","10.html","11.html","12.html","13.html","14.html","15.html","16.html","17.html","18.html","2.html","3.html","4.html","5.html","6.html","7.html","8.html","9.html"];
+        const slides = <%= slide_files.to_json %>;
         let filename = window.location.pathname.split('/').pop();
         if (filename === '') filename = 'index.html';
 
@@ -28,31 +28,16 @@
       });
     </script>
   </head>
-  <body data-mode="light" data-variant="top">
+  <body data-mode="<%= mode %>" data-variant="<%= variant %>">
     <div class="blur-accent blur-accent-blue-1"></div>
     <div class="blur-accent blur-accent-green-1"></div>
 
-    <h1 id="build-commands">Build Commands</h1>
+    <%= content %>
 
-<h2 id="development">Development</h2>
-
-<p>Run the dev server with live reloading:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rake server
-</code></pre></div></div>
-
-<p>Visit http://localhost:8000 to see your slides. Changes to markdown, templates, or assets auto-reload.</p>
-
-<h2 id="production">Production</h2>
-
-<p>Build static HTML files:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rake build
-</code></pre></div></div>
-
-<p>Output files are generated in the <code>output/</code> directory.</p>
-
-
-    
+    <% if defined?(logo) && logo %>
+    <footer class="footer-logo">
+      <img src="<%= logo == "square" ? "logo-square.svg" : "logo.svg" %>" alt="Sinaptia Logo">
+    </footer>
+    <% end %>
   </body>
 </html>

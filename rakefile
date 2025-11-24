@@ -1,0 +1,103 @@
+require "bundler/setup"
+require "erb"
+require "kramdown"
+require "fileutils"
+require "webrick"
+require "listen"
+require "json"
+require "yaml"
+
+def compile_css
+  system("tailwindcss -i assets/application.css -o output/application.css --minify")
+  FileUtils.cp("assets/PPMonumentExtended-Regular.otf", "output/PPMonumentExtended-Regular.otf")
+  FileUtils.cp("assets/logo.svg", "output/logo.svg")
+  FileUtils.cp("assets/logo-square.svg", "output/logo-square.svg")
+end
+
+def run_build
+  slides_dir = "slides"
+  output_dir = "output"
+  template_file = "templates/layout.html.erb"
+
+  FileUtils.mkdir_p(output_dir)
+  compile_css
+  template = ERB.new(File.read(template_file))
+  md_files = Dir.glob("#{slides_dir}/*.md").sort
+  slide_files = md_files.map.with_index { |f, i| (i == 0) ? "index.html" : "#{File.basename(f, ".md")}.html" }
+
+  md_files.zip(slide_files).each do |md_file, current_slide_file|
+    raw_content = File.read(md_file)
+
+    # Parse frontmatter
+    frontmatter = {}
+    markdown_content = raw_content
+
+    if raw_content =~ /\A---\s*\n(.*?\n?)^---\s*$\n?(.*)/m
+      frontmatter = YAML.safe_load($1) || {}
+      markdown_content = $2
+    end
+
+    # Get mode from frontmatter (default to 'light')
+    mode = frontmatter["mode"] || "light"
+
+    # Get variant from frontmatter (default to 'top')
+    variant = frontmatter["variant"] || "top"
+
+    # Get logo from frontmatter (can be 'full', 'square', or nil)
+    logo = frontmatter["logo"]
+
+    content = Kramdown::Document.new(markdown_content, input: "GFM", syntax_highlighter: "rouge", syntax_highlighter_opts: {css_class: "highlight"}).to_html
+    html = template.result(binding)
+    output_file = File.join(output_dir, current_slide_file)
+    File.write(output_file, html)
+    puts "Generated: #{output_file}"
+  end
+
+  puts "Build complete!"
+end
+
+task :build do
+  run_build
+end
+
+task server: :build do
+  $stdout.sync = true
+
+  slides_dir = "slides"
+  template_dir = "templates"
+  assets_dir = "assets"
+  output_dir = "output"
+  port = 8000
+
+  server = WEBrick::HTTPServer.new(
+    Port: port,
+    DocumentRoot: output_dir,
+    Logger: WEBrick::Log.new(File::NULL),
+    AccessLog: []
+  )
+
+  trap("INT") { server.shutdown }
+
+  server_thread = Thread.new do
+    server.start
+  end
+
+  puts "Server running at http://localhost:#{port}"
+  puts "Watching for changes in #{slides_dir}/, #{template_dir}/, and #{assets_dir}/..."
+
+  listener = Listen.to(slides_dir, template_dir, assets_dir) do |modified, added, removed|
+    changed_files = modified + added + removed
+    css_files = changed_files.select { |f| f.end_with?(".css") }
+
+    if css_files.any?
+      puts "CSS changes detected, recompiling styles..."
+      compile_css
+    else
+      puts "Content changes detected, rebuilding..."
+      run_build
+    end
+  end
+
+  listener.start
+  server_thread.join
+end

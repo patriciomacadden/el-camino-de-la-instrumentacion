@@ -1,128 +1,181 @@
 # Sinaptia Slide Builder - Claude Implementation Notes
 
 ## Overview
-This is a custom slide generation system that separates content (Markdown) from templates (HTML structure), solving the problem of costly template-level changes that previously required manual updates across all slides.
+This is a custom slide generation system built with Ruby, Rake, and ERB that creates beautiful Sinaptia-branded presentations from Markdown files. The system provides a unified template with flexible configuration options through YAML frontmatter, supporting light/dark modes, centered/top layouts, and optional logo placement.
 
 ## Architecture
 
 ### Key Components
-- **Markdown Content**: `slides/*.md` files with YAML frontmatter
-- **HTML Templates**: `templates/` directory with shell templates
-- **Images**: `slides/` directory for assets (copied to `output/` during build)
-- **Output**: `output/` generated HTML slides
-- **Builder**: `build` - main processing script
+- **Markdown Content**: `slides/*.md` files with YAML frontmatter for configuration
+- **Single HTML Template**: `templates/layout.html.erb` - unified template for all slides
+- **Assets**: `assets/` directory containing CSS, fonts, and logo files
+- **Output**: `output/` generated HTML slides with compiled CSS
+- **Builder**: `rakefile` - Rake tasks for building, watching, and serving
+- **Development Server**: Built-in WEBrick server with hot-reload on port 8000
+- **Docker Support**: Dockerfile and docker-compose.yml for containerized development
 
-### Template System
-- `frontpage` - Hero/title slides
-- `section-title` - Chapter dividers
-- `content` - Main content slides with text/code/images
+### Template System (Simplified)
+The system now uses a **single unified template** (`layout.html.erb`) instead of multiple template types. Slide appearance is controlled via frontmatter options:
+- **mode**: `light` (default) or `dark` - controls background and text colors
+- **variant**: `top` (default) or `center` - controls vertical content alignment
+- **logo**: `full`, `square`, or omit - controls footer logo display
 
 ## Technical Implementation
 
-### Custom Kramdown Renderer (`SinaptiaRenderer`)
-Generates HTML with exact CSS class matches for Sinaptia styling:
+### Markdown Processing
+Uses **Kramdown** with GitHub Flavored Markdown (GFM) and **Rouge** for syntax highlighting:
+- Input format: GFM (GitHub Flavored Markdown)
+- Syntax highlighter: Rouge with `.highlight` CSS class
+- Converts markdown to HTML while preserving code blocks and formatting
 
-```ruby
-# Key CSS classes preserved:
-- .font-lead (Inconsolata font for headers)
-- .text-sinaptia-accent-blue (brand blue)
-- .custom-bullets (styled bullet points)
-- .text-lg.xl:text-[20px] (responsive typography)
-```
+### Build Pipeline
+1. **Parse frontmatter** - Extract YAML configuration (mode, variant, logo)
+2. **Render markdown** - Convert markdown content to HTML with Kramdown
+3. **Compile CSS** - Run Tailwind CSS on `assets/application.css` → `output/application.css`
+4. **Copy assets** - Copy fonts, logos, and brand assets to output directory
+5. **Template rendering** - Inject content and configuration into ERB template
+6. **Generate navigation** - Create slide navigation array for keyboard controls
+7. **Write HTML files** - First slide becomes `index.html`, others numbered by filename
 
-### Content Injection Strategy
-1. Parse YAML frontmatter from markdown
-2. Render markdown content with custom renderer
-3. Load appropriate template shell
-4. Remove template placeholder content
-5. Inject rendered content into template
-6. Add syntax highlighting (Prism.js)
-7. Fix navigation references
+### Asset Pipeline
+- **CSS Compilation**: Tailwind CSS processes `assets/application.css` with `--minify` flag
+- **Font Handling**: `PPMonumentExtended-Regular.otf` copied to output directory
+- **Logo Files**: Both `logo.svg` and `logo-square.svg` copied to output
+- **Cache Busting**: CSS includes timestamp query parameter (`?v=<timestamp>`)
 
-### Image Handling
-- Source: `images/whale.png` in markdown (stored in `slides/` directory)
-- Generated: `../images/whale.png` in HTML (relative to output dir)
-- Assets copied from `slides/` to `output/images/` during build
+### Navigation System
+- **Keyboard Controls**: Arrow keys (left/right, up/down) for navigation
+- **Slide Array**: Generated at build time, injected into each page via JavaScript
+- **File Naming**:
+  - First slide: `index.html`
+  - Subsequent slides: `{filename}.html` (e.g., `02.html`, `10.html`)
+- **Auto-detection**: JavaScript detects current slide and enables prev/next navigation
 
 ## Build Process
 
-### Commands
+### Rake Tasks
 ```bash
-# Build all slides
-ruby build
+# Build slides once
+rake build
 
-# Compare with originals
-ruby compare_results.rb
+# Build and start development server with file watching
+rake server
+
+# Docker commands
+docker-compose up        # Start containerized development environment
+docker-compose build     # Rebuild Docker image
 ```
 
-### Post-Processing Features
-- Syntax highlighting via Prism.js CDN
-- Navigation script with 3b.html (whale joke slide)
-- Clean template content removal
-- Proper image path resolution
+### Development Workflow
+1. **Edit slides** - Modify `.md` files in `slides/` directory
+2. **Auto-rebuild** - File watcher detects changes and rebuilds automatically
+3. **Live preview** - Browser at `http://localhost:8000` shows updates
+4. **Asset watching** - CSS changes trigger style recompilation only
+5. **Content watching** - Markdown/template changes trigger full rebuild
+
+### File Watching
+The development server monitors three directories:
+- `slides/` - Markdown content files
+- `templates/` - ERB template files
+- `assets/` - CSS, fonts, and images
+
+**Smart rebuilding:**
+- CSS file changes → `compile_css` only
+- Everything else → Full `run_build`
 
 ## File Structure
 ```
 .
-├── build               # Main builder script
-├── templates/              # HTML template shells
-│   ├── frontpage.erb
-│   ├── content.erb
-│   └── section-title.erb
-├── slides/                 # Markdown slides and images
-│   ├── 1.md
-│   ├── 2.md
-│   ├── 3.md
-│   ├── 3b.md
-│   ├── 4.md
-│   ├── 5.md
-│   ├── whale.png
-│   └── no-moon.png
-└── output/                 # Generated slides
-    ├── 1.html (frontpage)
-    ├── 2.html (section-title)
-    ├── 3.html (content)
-    ├── 3b.html (whale joke)
-    ├── 4.html (content)
-    └── 5.html (section-title)
+├── rakefile                    # Rake tasks for build, server, and file watching
+├── Gemfile                     # Ruby dependencies (kramdown, listen, webrick, etc.)
+├── Dockerfile                  # Container image for development
+├── docker-compose.yml          # Docker Compose configuration
+├── .dockerignore               # Docker build exclusions
+├── .gitignore                  # Git exclusions (output/ directory)
+├── BRAND_GUIDELINES.md         # Sinaptia brand colors, fonts, and styling
+├── README.md                   # User-facing documentation
+├── CLAUDE.md                   # Implementation notes (this file)
+├── templates/
+│   └── layout.html.erb        # Single unified ERB template
+├── assets/
+│   ├── application.css        # Tailwind CSS source file
+│   ├── sinaptia.css           # Additional Sinaptia styles
+│   ├── logo.svg               # Full Sinaptia logo
+│   ├── logo-square.svg        # Square logo variant
+│   └── PPMonumentExtended-Regular.otf  # Custom title font
+├── slides/
+│   ├── 01.md                  # First slide (becomes index.html)
+│   ├── 02.md                  # Subsequent slides
+│   ├── ...
+│   └── 18.md
+└── output/                    # Generated files (git-ignored)
+    ├── index.html             # First slide
+    ├── 02.html               # Numbered slides
+    ├── ...
+    ├── application.css        # Compiled Tailwind CSS
+    ├── logo.svg              # Copied assets
+    ├── logo-square.svg
+    └── PPMonumentExtended-Regular.otf
 ```
 
-## Key Fixes Applied
-1. **Template Content Duplication**: Removed placeholder content before injection
-2. **Image Paths**: Fixed to use `../images/` from output directory
-3. **Code Font Size**: Changed from `text-sm` to `text-base`
-4. **Syntax Highlighting**: Added Prism.js CDN integration
-5. **Navigation**: Proper 3b.html inclusion for joke effect
-6. **CSS Preservation**: Exact match of original Sinaptia styling
+## Key Features
+1. **Unified Template**: Single template instead of multiple types (frontpage, content, section-title)
+2. **Flexible Configuration**: Control mode (light/dark), layout (top/center), and logo via frontmatter
+3. **Live Development**: Auto-rebuild and hot-reload during development
+4. **Brand Consistency**: Sinaptia colors, fonts, and styling applied automatically
+5. **Smart Asset Pipeline**: Tailwind CSS compilation with cache busting
+6. **Docker Support**: Containerized development environment
+7. **Keyboard Navigation**: Arrow key navigation between slides
+8. **Syntax Highlighting**: Rouge-powered code highlighting in markdown
 
 ## Markdown Format
+
+### Basic Structure
 ```yaml
 ---
-template: content
+mode: light           # "light" or "dark" (default: light)
+variant: center       # "top" or "center" (default: top)
+logo: full            # "full", "square", or omit (default: no logo)
 ---
 
 # Title Here
 
-Content with **formatting**
+Content with **formatting** and [links](https://example.com)
+
+## Subheadings
+
+- Bullet points
+- More items
 
 ```ruby
-code blocks with syntax highlighting
+def hello
+  puts "Code blocks with syntax highlighting"
+end
 ```
 
-![Alt text](images/image.png)
+**Bold**, *italic*, and `inline code`
 ```
 
-## Benefits Achieved
-- ✅ Template-content separation
-- ✅ Single source of truth for templates
-- ✅ Easy markdown editing
-- ✅ Preserved exact styling
-- ✅ Automated build process
-- ✅ Working navigation and images
+### Frontmatter Options
+
+| Option    | Values                   | Default | Description                      |
+| --------- | ------------------------ | ------- | -------------------------------- |
+| `mode`    | `light`, `dark`          | `light` | Background and text color scheme |
+| `variant` | `top`, `center`          | `top`   | Vertical content alignment       |
+| `logo`    | `full`, `square`, (none) | (none)  | Footer logo display              |
+
+### Markdown Features
+- **GitHub Flavored Markdown (GFM)**: Full support for tables, task lists, strikethrough, etc.
+- **Syntax Highlighting**: Automatic code highlighting via Rouge
+- **Inline HTML**: Can embed HTML when needed
+- **Lists**: Ordered, unordered, and nested lists
+- **Links and Images**: Standard markdown syntax
+- **Code Blocks**: Fenced code blocks with language specification
 
 ## Usage Notes
-- Edit markdown files in `slides/` directory
-- Run builder to regenerate all slides
-- Template changes apply to all slides automatically
-- Images should be placed in `slides/` directory alongside markdown files
-- 3b.md is the whale joke slide (intentional)
+- **File naming**: Use numbered prefixes (01.md, 02.md) for slide ordering
+- **First slide**: Becomes `index.html` in output
+- **Development**: Use `rake server` for live development with auto-reload
+- **Production**: Run `rake build` once to generate static HTML files
+- **Styling**: Controlled by Tailwind CSS classes in `assets/application.css`
+- **Brand colors**: Defined in `BRAND_GUIDELINES.md` and applied via Sinaptia CSS
