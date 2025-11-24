@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="application.css">
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const slides = <%= slide_files.to_json %>;
+        let filename = window.location.pathname.split('/').pop();
+        if (filename === '') filename = 'index.html';
+
+        const currentIndex = slides.indexOf(filename);
+        if (currentIndex === -1) return;
+
+        document.addEventListener('keydown', function(e) {
+          let nextIndex = null;
+
+          if (e.keyCode === 39 || e.keyCode === 40) {
+            nextIndex = currentIndex + 1;
+          }
+          else if (e.keyCode === 37 || e.keyCode === 38) {
+            nextIndex = currentIndex - 1;
+          }
+
+          if (nextIndex !== null && nextIndex >= 0 && nextIndex < slides.length) {
+            window.location.href = slides[nextIndex];
+          }
+        });
+      });
+    </script>
+  </head>
+  <body data-mode="<%= mode %>" data-variant="<%= variant %>">
+    <div class="blur-accent blur-accent-blue-1"></div>
+    <div class="blur-accent blur-accent-green-1"></div>
+
+    <%= content %>
+
+    <% if defined?(logo) && logo %>
+    <footer class="footer-logo">
+      <img src="<%= logo == "square" ? "logo-square.svg" : "logo.svg" %>" alt="Sinaptia Logo">
+    </footer>
+    <% end %>
+  </body>
+</html>

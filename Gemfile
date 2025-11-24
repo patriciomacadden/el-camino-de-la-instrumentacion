@@ -1,0 +1,11 @@
+source "https://rubygems.org"
+
+gem "kramdown"
+gem "kramdown-parser-gfm"
+gem "listen"
+gem "rake"
+gem "rouge"
+gem "ruby-lsp"
+gem "standardrb"
+gem "tailwindcss-ruby"
+gem "webrick"
